@@ -98,20 +98,25 @@
                     ...prev,
                     [selectedDate]: prev[selectedDate]?.map(student => 
                         student.name === studentName 
-                            ? { ...student, present: !student.present }
+                            ? { ...student, present: student.present === null ? true : student.present === true ? false : null }
                             : student
-                    ) || students.map(student => ({ name: student, present: student === studentName ? true : false }))
+                    ) || students.map(student => ({ name: student, present: null }))
                 }));
             };
 
-            // Popola la lista delle presenze del giorno corrente con gli studenti registrati, se non è già presente
-            const currentDayAttendance = dailyAttendance[selectedDate] || students.map(student => ({ name: student, present: false }));
+            const getAttendanceStatus = (status) => {
+                if (status === true) return "Presente";
+                if (status === false) return "Assente";
+                return "Non definito";
+            };
+
+            const currentDayAttendance = dailyAttendance[selectedDate] || students.map(student => ({ name: student, present: null }));
 
             useEffect(() => {
                 if (!dailyAttendance[selectedDate]) {
                     setDailyAttendance(prev => ({
                         ...prev,
-                        [selectedDate]: students.map(student => ({ name: student, present: false }))
+                        [selectedDate]: students.map(student => ({ name: student, present: null }))
                     }));
                 }
             }, [selectedDate, students]);
@@ -154,12 +159,14 @@
                                     <button
                                         onClick={() => toggleAttendance(student.name)}
                                         className={`px-3 py-1 rounded ${
-                                            student.present 
+                                            student.present === true 
                                                 ? 'bg-green-600 text-white' 
-                                                : 'bg-gray-200'
+                                                : student.present === false 
+                                                    ? 'bg-red-600 text-white' 
+                                                    : 'bg-gray-200'
                                         }`}
                                     >
-                                        {student.present ? "Presente" : "Assente"}
+                                        {getAttendanceStatus(student.present)}
                                     </button>
                                     <button
                                         onClick={() => removeStudentFromRegister(student.name)}
@@ -173,8 +180,9 @@
                     </div>
 
                     <div className="bg-gray-50 p-4 rounded-lg mb-6">
-                        <p>Presenti oggi: {currentDayAttendance.filter(s => s.present).length}</p>
-                        <p>Totale oggi: {currentDayAttendance.length}</p>
+                        <p>Presenti oggi: {currentDayAttendance.filter(s => s.present === true).length}</p>
+                        <p>Assenti oggi: {currentDayAttendance.filter(s => s.present === false).length}</p>
+                        <p>Totale iscritti: {currentDayAttendance.length}</p>
                     </div>
                 </div>
             );
