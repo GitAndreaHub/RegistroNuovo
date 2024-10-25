@@ -55,6 +55,7 @@
     const AttendanceTracker = () => {
         const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
         const [newStudent, setNewStudent] = useState('');
+        const [showStats, setShowStats] = useState(false);
         const [students, setStudents] = useState(() => {
             const saved = localStorage.getItem('students');
             return saved ? JSON.parse(saved) : [];
@@ -78,7 +79,6 @@
                 setStudents(prev => [...prev, trimmedStudent]);
                 setDailyAttendance(prev => {
                     const updatedAttendance = { ...prev };
-                    // Aggiungi il nuovo studente a tutti i giorni registrati.
                     Object.keys(updatedAttendance).forEach(date => {
                         const dateAttendance = updatedAttendance[date];
                         if (!dateAttendance.some(s => s.name === trimmedStudent)) {
@@ -122,7 +122,8 @@
             return "Non definito";
         };
 
-        // Aggiorna la lista di presenze per il giorno selezionato, aggiungendo studenti mancanti.
+        const currentDayAttendance = dailyAttendance[selectedDate] || students.map(student => ({ name: student, present: null }));
+
         useEffect(() => {
             setDailyAttendance(prev => ({
                 ...prev,
@@ -134,7 +135,25 @@
             }));
         }, [selectedDate, students]);
 
-        const currentDayAttendance = dailyAttendance[selectedDate] || [];
+        // Calcola le statistiche totali per ogni studente
+        const calculateTotalStats = () => {
+            const stats = {};
+            Object.values(dailyAttendance).forEach(dayStudents => {
+                dayStudents.forEach(student => {
+                    if (!stats[student.name]) {
+                        stats[student.name] = { present: 0, absent: 0 };
+                    }
+                    if (student.present === true) {
+                        stats[student.name].present += 1;
+                    } else if (student.present === false) {
+                        stats[student.name].absent += 1;
+                    }
+                });
+            });
+            return stats;
+        };
+
+        const totalStats = calculateTotalStats();
 
         return (
             <div className="max-w-md mx-auto p-4">
@@ -199,12 +218,46 @@
                     <p>Assenti oggi: {currentDayAttendance.filter(s => s.present === false).length}</p>
                     <p>Totale iscritti: {currentDayAttendance.length}</p>
                 </div>
+
+                <div className="bg-white rounded-lg shadow">
+                    <button
+                        className="w-full p-4 text-left font-semibold flex justify-between items-center"
+                        onClick={() => setShowStats(!showStats)}
+                    >
+                        <span>Statistiche Totali</span>
+                        <span>{showStats ? "▼" : "▶"}</span>
+                    </button>
+                    
+                    {showStats && (
+                        <div className="p-4">
+                            <table className="w-full">
+                                <thead>
+                                    <tr>
+                                        <th className="text-left p-2">Nome</th>
+                                        <th className="text-center p-2">Presenze</th>
+                                        <th className="text-center p-2">Assenze</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {Object.entries(totalStats).map(([name, data], index) => (
+                                        <tr key={index} className="border-t">
+                                            <td className="p-2">{name}</td>
+                                            <td className="text-center p-2">{data.present}</td>
+                                            <td className="text-center p-2">{data.absent}</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
+                </div>
             </div>
         );
     };
 
     ReactDOM.render(<AttendanceTracker />, document.getElementById('root'));
 </script>
+
 
 
 
