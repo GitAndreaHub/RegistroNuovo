@@ -80,21 +80,18 @@
             };
 
             const removeStudentFromRegister = (studentName) => {
-            // Mostra una finestra di conferma
-            const confirmed = window.confirm(`Sei sicuro di voler rimuovere ${studentName}?`);
-            if (confirmed) {
-                // Se l'utente conferma, rimuovi lo studente
-                setStudents(prev => prev.filter(student => student !== studentName));
-                setDailyAttendance(prev => {
-                    const updatedAttendance = { ...prev };
-                    for (let date in updatedAttendance) {
-                        updatedAttendance[date] = updatedAttendance[date].filter(student => student.name !== studentName);
-                    }
-                    return updatedAttendance;
+                const confirmed = window.confirm(`Sei sicuro di voler rimuovere ${studentName}?`);
+                if (confirmed) {
+                    setStudents(prev => prev.filter(student => student !== studentName));
+                    setDailyAttendance(prev => {
+                        const updatedAttendance = { ...prev };
+                        for (let date in updatedAttendance) {
+                            updatedAttendance[date] = updatedAttendance[date].filter(student => student.name !== studentName);
+                        }
+                        return updatedAttendance;
                     });
                 }
             };
-
 
             const toggleAttendance = (studentName) => {
                 setDailyAttendance(prev => ({
