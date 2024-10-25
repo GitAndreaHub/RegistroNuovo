@@ -50,158 +50,162 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
 
         <script type="text/babel">
-                const { useState, useEffect } = React;
-            
-                const AttendanceTracker = () => {
-                    const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
-                    const [newStudent, setNewStudent] = useState('');
-                    const [students, setStudents] = useState(() => {
-                        const saved = localStorage.getItem('students');
-                        return saved ? JSON.parse(saved) : [];
-                    });
-                    const [dailyAttendance, setDailyAttendance] = useState(() => {
-                        const saved = localStorage.getItem('dailyAttendance');
-                        return saved ? JSON.parse(saved) : {};
-                    });
-            
-                    useEffect(() => {
-                        localStorage.setItem('students', JSON.stringify(students));
-                    }, [students]);
-            
-                    useEffect(() => {
-                        localStorage.setItem('dailyAttendance', JSON.stringify(dailyAttendance));
-                    }, [dailyAttendance]);
-            
-                    const handleAddStudent = () => {
-                        const trimmedStudent = newStudent.trim();
-                        if (trimmedStudent && !students.includes(trimmedStudent)) {
-                            setStudents(prev => [...prev, trimmedStudent]);
-                            setDailyAttendance(prev => {
-                                const updatedAttendance = { ...prev };
-                                // Aggiunge il nuovo studente a tutti i giorni esistenti
-                                Object.keys(updatedAttendance).forEach(date => {
-                                    updatedAttendance[date] = updatedAttendance[date].some(s => s.name === trimmedStudent)
-                                        ? updatedAttendance[date]
-                                        : [...updatedAttendance[date], { name: trimmedStudent, present: null }];
-                                });
-                                return updatedAttendance;
-                            });
-                            setNewStudent('');
+    const { useState, useEffect } = React;
+
+    const AttendanceTracker = () => {
+        const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+        const [newStudent, setNewStudent] = useState('');
+        const [students, setStudents] = useState(() => {
+            const saved = localStorage.getItem('students');
+            return saved ? JSON.parse(saved) : [];
+        });
+        const [dailyAttendance, setDailyAttendance] = useState(() => {
+            const saved = localStorage.getItem('dailyAttendance');
+            return saved ? JSON.parse(saved) : {};
+        });
+
+        useEffect(() => {
+            localStorage.setItem('students', JSON.stringify(students));
+        }, [students]);
+
+        useEffect(() => {
+            localStorage.setItem('dailyAttendance', JSON.stringify(dailyAttendance));
+        }, [dailyAttendance]);
+
+        const handleAddStudent = () => {
+            const trimmedStudent = newStudent.trim();
+            if (trimmedStudent && !students.includes(trimmedStudent)) {
+                setStudents(prev => [...prev, trimmedStudent]);
+                setDailyAttendance(prev => {
+                    const updatedAttendance = { ...prev };
+                    // Aggiungi il nuovo studente a tutti i giorni registrati.
+                    Object.keys(updatedAttendance).forEach(date => {
+                        const dateAttendance = updatedAttendance[date];
+                        if (!dateAttendance.some(s => s.name === trimmedStudent)) {
+                            dateAttendance.push({ name: trimmedStudent, present: null });
                         }
-                    };
-            
-                    const removeStudentFromRegister = (studentName) => {
-                        const confirmed = window.confirm(`Sei sicuro di voler rimuovere ${studentName}?`);
-                        if (confirmed) {
-                            setStudents(prev => prev.filter(student => student !== studentName));
-                            setDailyAttendance(prev => {
-                                const updatedAttendance = { ...prev };
-                                for (let date in updatedAttendance) {
-                                    updatedAttendance[date] = updatedAttendance[date].filter(student => student.name !== studentName);
-                                }
-                                return updatedAttendance;
-                            });
-                        }
-                    };
-            
-                    const toggleAttendance = (studentName) => {
-                        setDailyAttendance(prev => ({
-                            ...prev,
-                            [selectedDate]: prev[selectedDate].map(student => 
-                                student.name === studentName 
-                                    ? { ...student, present: student.present === null ? true : student.present === true ? false : null }
-                                    : student
-                            )
-                        }));
-                    };
-            
-                    const getAttendanceStatus = (status) => {
-                        if (status === true) return "Presente";
-                        if (status === false) return "Assente";
-                        return "Non definito";
-                    };
-            
-                    const currentDayAttendance = dailyAttendance[selectedDate] || students.map(student => ({ name: student, present: null }));
-            
-                    useEffect(() => {
-                        setDailyAttendance(prev => ({
-                            ...prev,
-                            [selectedDate]: students.map(student => {
-                                const existing = prev[selectedDate]?.find(s => s.name === student);
-                                return existing || { name: student, present: null };
-                            })
-                        }));
-                    }, [selectedDate, students]);
-            
-                    return (
-                        <div className="max-w-md mx-auto p-4">
-                            <h1 className="text-2xl font-bold mb-4 text-center">GiocoCoro Presenze</h1>
-            
-                            <div className="mb-6">
-                                <input
-                                    type="date"
-                                    value={selectedDate}
-                                    onChange={(e) => setSelectedDate(e.target.value)}
-                                    className="w-full p-2 border rounded"
-                                />
-                            </div>
-            
-                            <div className="flex gap-2 mb-6">
-                                <input
-                                    type="text"
-                                    placeholder="Nome nuovo studente"
-                                    value={newStudent}
-                                    onChange={(e) => setNewStudent(e.target.value)}
-                                    onKeyPress={(e) => e.key === 'Enter' && handleAddStudent()}
-                                    className="flex-1 p-2 border rounded"
-                                />
+                    });
+                    return updatedAttendance;
+                });
+                setNewStudent('');
+            }
+        };
+
+        const removeStudentFromRegister = (studentName) => {
+            const confirmed = window.confirm(`Sei sicuro di voler rimuovere ${studentName}?`);
+            if (confirmed) {
+                setStudents(prev => prev.filter(student => student !== studentName));
+                setDailyAttendance(prev => {
+                    const updatedAttendance = { ...prev };
+                    for (let date in updatedAttendance) {
+                        updatedAttendance[date] = updatedAttendance[date].filter(student => student.name !== studentName);
+                    }
+                    return updatedAttendance;
+                });
+            }
+        };
+
+        const toggleAttendance = (studentName) => {
+            setDailyAttendance(prev => ({
+                ...prev,
+                [selectedDate]: prev[selectedDate].map(student => 
+                    student.name === studentName 
+                        ? { ...student, present: student.present === null ? true : student.present === true ? false : null }
+                        : student
+                )
+            }));
+        };
+
+        const getAttendanceStatus = (status) => {
+            if (status === true) return "Presente";
+            if (status === false) return "Assente";
+            return "Non definito";
+        };
+
+        // Aggiorna la lista di presenze per il giorno selezionato, aggiungendo studenti mancanti.
+        useEffect(() => {
+            setDailyAttendance(prev => ({
+                ...prev,
+                [selectedDate]: (prev[selectedDate] || []).concat(
+                    students
+                        .filter(student => !(prev[selectedDate] || []).some(s => s.name === student))
+                        .map(student => ({ name: student, present: null }))
+                )
+            }));
+        }, [selectedDate, students]);
+
+        const currentDayAttendance = dailyAttendance[selectedDate] || [];
+
+        return (
+            <div className="max-w-md mx-auto p-4">
+                <h1 className="text-2xl font-bold mb-4 text-center">GiocoCoro Presenze</h1>
+
+                <div className="mb-6">
+                    <input
+                        type="date"
+                        value={selectedDate}
+                        onChange={(e) => setSelectedDate(e.target.value)}
+                        className="w-full p-2 border rounded"
+                    />
+                </div>
+
+                <div className="flex gap-2 mb-6">
+                    <input
+                        type="text"
+                        placeholder="Nome nuovo studente"
+                        value={newStudent}
+                        onChange={(e) => setNewStudent(e.target.value)}
+                        onKeyPress={(e) => e.key === 'Enter' && handleAddStudent()}
+                        className="flex-1 p-2 border rounded"
+                    />
+                    <button
+                        onClick={handleAddStudent}
+                        className="px-4 py-2 bg-blue-600 text-white rounded"
+                    >
+                        Aggiungi
+                    </button>
+                </div>
+
+                <div className="bg-white rounded-lg shadow mb-6">
+                    {currentDayAttendance.map((student, index) => (
+                        <div key={index} className="flex items-center justify-between p-3 border-b">
+                            <span>{student.name}</span>
+                            <div className="flex gap-2">
                                 <button
-                                    onClick={handleAddStudent}
-                                    className="px-4 py-2 bg-blue-600 text-white rounded"
+                                    onClick={() => toggleAttendance(student.name)}
+                                    className={`px-3 py-1 rounded ${
+                                        student.present === true 
+                                            ? 'bg-green-600 text-white' 
+                                            : student.present === false 
+                                                ? 'bg-red-600 text-white' 
+                                                : 'bg-gray-200'
+                                    }`}
                                 >
-                                    Aggiungi
+                                    {getAttendanceStatus(student.present)}
+                                </button>
+                                <button
+                                    onClick={() => removeStudentFromRegister(student.name)}
+                                    className="px-2 text-red-600"
+                                >
+                                    Rimuovi
                                 </button>
                             </div>
-            
-                            <div className="bg-white rounded-lg shadow mb-6">
-                                {currentDayAttendance.map((student, index) => (
-                                    <div key={index} className="flex items-center justify-between p-3 border-b">
-                                        <span>{student.name}</span>
-                                        <div className="flex gap-2">
-                                            <button
-                                                onClick={() => toggleAttendance(student.name)}
-                                                className={`px-3 py-1 rounded ${
-                                                    student.present === true 
-                                                        ? 'bg-green-600 text-white' 
-                                                        : student.present === false 
-                                                            ? 'bg-red-600 text-white' 
-                                                            : 'bg-gray-200'
-                                                }`}
-                                            >
-                                                {getAttendanceStatus(student.present)}
-                                            </button>
-                                            <button
-                                                onClick={() => removeStudentFromRegister(student.name)}
-                                                className="px-2 text-red-600"
-                                            >
-                                                Rimuovi
-                                            </button>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-            
-                            <div className="bg-gray-50 p-4 rounded-lg mb-6">
-                                <p>Presenti oggi: {currentDayAttendance.filter(s => s.present === true).length}</p>
-                                <p>Assenti oggi: {currentDayAttendance.filter(s => s.present === false).length}</p>
-                                <p>Totale iscritti: {currentDayAttendance.length}</p>
-                            </div>
                         </div>
-                    );
-                };
-            
-                ReactDOM.render(<AttendanceTracker />, document.getElementById('root'));
-            </script>
+                    ))}
+                </div>
+
+                <div className="bg-gray-50 p-4 rounded-lg mb-6">
+                    <p>Presenti oggi: {currentDayAttendance.filter(s => s.present === true).length}</p>
+                    <p>Assenti oggi: {currentDayAttendance.filter(s => s.present === false).length}</p>
+                    <p>Totale iscritti: {currentDayAttendance.length}</p>
+                </div>
+            </div>
+        );
+    };
+
+    ReactDOM.render(<AttendanceTracker />, document.getElementById('root'));
+</script>
+
 
 
 </body>
