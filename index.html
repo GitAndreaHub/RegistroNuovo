@@ -49,9 +49,9 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
 
-    <script type="text/babel">
+        <script type="text/babel">
         const { useState, useEffect } = React;
-
+    
         const AttendanceTracker = () => {
             const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
             const [newStudent, setNewStudent] = useState('');
@@ -63,22 +63,27 @@
                 const saved = localStorage.getItem('dailyAttendance');
                 return saved ? JSON.parse(saved) : {};
             });
-
+    
+            // Salva gli studenti nel localStorage ogni volta che cambiano
             useEffect(() => {
                 localStorage.setItem('students', JSON.stringify(students));
             }, [students]);
-
+    
+            // Salva le presenze giornaliere nel localStorage ogni volta che cambiano
             useEffect(() => {
                 localStorage.setItem('dailyAttendance', JSON.stringify(dailyAttendance));
             }, [dailyAttendance]);
-
+    
+            // Aggiunge un nuovo studente al registro
             const handleAddStudent = () => {
-                if (newStudent.trim() && !students.includes(newStudent.trim())) {
-                    setStudents(prev => [...prev, newStudent.trim()]);
+                const trimmedStudent = newStudent.trim();
+                if (trimmedStudent && !students.includes(trimmedStudent)) {
+                    setStudents(prev => [...prev, trimmedStudent]);
                     setNewStudent('');
                 }
             };
-
+    
+            // Rimuove uno studente dal registro e aggiorna le presenze
             const removeStudentFromRegister = (studentName) => {
                 const confirmed = window.confirm(`Sei sicuro di voler rimuovere ${studentName}?`);
                 if (confirmed) {
@@ -92,26 +97,29 @@
                     });
                 }
             };
-
+    
+            // Cambia lo stato di presenza di uno studente per il giorno selezionato
             const toggleAttendance = (studentName) => {
                 setDailyAttendance(prev => ({
                     ...prev,
-                    [selectedDate]: prev[selectedDate]?.map(student => 
+                    [selectedDate]: prev[selectedDate].map(student => 
                         student.name === studentName 
                             ? { ...student, present: student.present === null ? true : student.present === true ? false : null }
                             : student
-                    ) || students.map(student => ({ name: student, present: null }))
+                    )
                 }));
             };
-
+    
+            // Ottiene lo stato di presenza in forma di testo
             const getAttendanceStatus = (status) => {
                 if (status === true) return "Presente";
                 if (status === false) return "Assente";
                 return "Non definito";
             };
-
+    
+            // Ottiene la lista delle presenze per il giorno selezionato, aggiungendo gli studenti se mancano
             const currentDayAttendance = dailyAttendance[selectedDate] || students.map(student => ({ name: student, present: null }));
-
+    
             useEffect(() => {
                 if (!dailyAttendance[selectedDate]) {
                     setDailyAttendance(prev => ({
@@ -120,11 +128,11 @@
                     }));
                 }
             }, [selectedDate, students]);
-
+    
             return (
                 <div className="max-w-md mx-auto p-4">
                     <h1 className="text-2xl font-bold mb-4 text-center">GiocoCoro Presenze</h1>
-
+    
                     <div className="mb-6">
                         <input
                             type="date"
@@ -133,7 +141,7 @@
                             className="w-full p-2 border rounded"
                         />
                     </div>
-
+    
                     <div className="flex gap-2 mb-6">
                         <input
                             type="text"
@@ -150,7 +158,7 @@
                             Aggiungi
                         </button>
                     </div>
-
+    
                     <div className="bg-white rounded-lg shadow mb-6">
                         {currentDayAttendance.map((student, index) => (
                             <div key={index} className="flex items-center justify-between p-3 border-b">
@@ -178,7 +186,7 @@
                             </div>
                         ))}
                     </div>
-
+    
                     <div className="bg-gray-50 p-4 rounded-lg mb-6">
                         <p>Presenti oggi: {currentDayAttendance.filter(s => s.present === true).length}</p>
                         <p>Assenti oggi: {currentDayAttendance.filter(s => s.present === false).length}</p>
@@ -187,8 +195,9 @@
                 </div>
             );
         };
-
+    
         ReactDOM.render(<AttendanceTracker />, document.getElementById('root'));
     </script>
+
 </body>
 </html>
