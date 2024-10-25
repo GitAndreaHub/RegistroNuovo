@@ -74,10 +74,16 @@
 
             const handleAddStudent = () => {
                 if (newStudent.trim() && !students.includes(newStudent.trim())) {
-                    setStudents(prev => [...prev, newStudent.trim()]);
+                    const studentName = newStudent.trim();
+                    setStudents(prev => [...prev, studentName]);
+                    setDailyAttendance(prev => ({
+                        ...prev,
+                        [selectedDate]: [...(prev[selectedDate] || []), { name: studentName, present: false }]
+                    }));
                     setNewStudent('');
                 }
             };
+
 
             const removeStudentFromRegister = (studentName) => {
                 const confirmed = window.confirm(`Sei sicuro di voler rimuovere ${studentName}?`);
